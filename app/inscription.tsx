@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -9,12 +9,14 @@ import { firebaseErrorMessage } from '../utils/firebaseErrors';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function InscriptionPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
   const validate = () => {
+    if (!name.trim()) return 'Nom requis';
     if (!EMAIL_REGEX.test(email)) return 'Email invalide';
     if (password.length < 6) return 'Le mot de passe doit faire au moins 6 caractères';
     if (password !== confirmPassword) return 'Les mots de passe ne correspondent pas';
@@ -32,6 +34,9 @@ export default function InscriptionPage() {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         const user = userCredential.user;
+        return updateProfile(user, { displayName: name.trim() }).then(() => user);
+      })
+      .then((user) => {
         Toast.show({ type: 'success', text1: 'Compte créé', text2: user.email ?? '' });
         router.replace('/profil');
       })
@@ -45,6 +50,13 @@ export default function InscriptionPage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Inscription</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nom"
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"

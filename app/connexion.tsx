@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import {
   FacebookAuthProvider,
   GithubAuthProvider,
+  signInAnonymously,
   signInWithEmailAndPassword,
   signInWithPopup,
 } from 'firebase/auth';
@@ -89,6 +90,20 @@ export default function ConnexionPage() {
       });
   };
 
+  const handleAnonymousLogin = () => {
+    setError('');
+    signInAnonymously(auth)
+      .then(() => {
+        Toast.show({ type: 'success', text1: 'Connecté en anonyme' });
+        router.replace('/profil');
+      })
+      .catch((error) => {
+        const msg = firebaseErrorMessage(error);
+        setError(msg);
+        Toast.show({ type: 'error', text1: 'Erreur connexion anonyme', text2: msg });
+      });
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Connexion</Text>
@@ -124,6 +139,10 @@ export default function ConnexionPage() {
 
       <Pressable style={styles.facebookButton} onPress={handleFacebookLogin}>
         <Text style={styles.buttonText}>Se connecter avec Facebook</Text>
+      </Pressable>
+
+      <Pressable style={styles.anonymousButton} onPress={handleAnonymousLogin}>
+        <Text style={styles.buttonText}>Connexion anonyme</Text>
       </Pressable>
     </View>
   );
@@ -164,6 +183,12 @@ const styles = StyleSheet.create({
   },
   facebookButton: {
     backgroundColor: '#1877f2',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  anonymousButton: {
+    backgroundColor: '#6b7280',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
