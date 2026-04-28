@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import {
+  FacebookAuthProvider,
   GithubAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -65,6 +66,29 @@ export default function ConnexionPage() {
       });
   };
 
+  const handleFacebookLogin = () => {
+    const provider = new FacebookAuthProvider();
+    setError('');
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        const credential = FacebookAuthProvider.credentialFromResult(result);
+        const token = credential?.accessToken;
+        const user = result.user;
+        console.log('Facebook token:', token);
+        Toast.show({
+          type: 'success',
+          text1: 'Connecté via Facebook',
+          text2: user.email ?? user.displayName ?? '',
+        });
+        router.replace('/profil');
+      })
+      .catch((error) => {
+        const msg = firebaseErrorMessage(error);
+        setError(msg);
+        Toast.show({ type: 'error', text1: 'Erreur Facebook', text2: msg });
+      });
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Connexion</Text>
@@ -96,6 +120,10 @@ export default function ConnexionPage() {
 
       <Pressable style={styles.githubButton} onPress={handleGithubLogin}>
         <Text style={styles.buttonText}>Se connecter avec GitHub</Text>
+      </Pressable>
+
+      <Pressable style={styles.facebookButton} onPress={handleFacebookLogin}>
+        <Text style={styles.buttonText}>Se connecter avec Facebook</Text>
       </Pressable>
     </View>
   );
@@ -130,6 +158,12 @@ const styles = StyleSheet.create({
   separatorText: { color: '#6b7280', fontSize: 14 },
   githubButton: {
     backgroundColor: '#24292e',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  facebookButton: {
+    backgroundColor: '#1877f2',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
