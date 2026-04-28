@@ -1,12 +1,15 @@
 import { router } from 'expo-router';
 import {
+  ConfirmationResult,
   FacebookAuthProvider,
   GithubAuthProvider,
+  RecaptchaVerifier,
   signInAnonymously,
   signInWithEmailAndPassword,
+  signInWithPhoneNumber,
   signInWithPopup,
 } from 'firebase/auth';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { auth } from '../firebaseConfig';
@@ -16,6 +19,22 @@ export default function ConnexionPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const [showPhoneForm, setShowPhoneForm] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
+
+  useEffect(() => {
+    if (!showPhoneForm) return;
+    if (typeof window === 'undefined') return;
+    if (recaptchaRef.current) return;
+    recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      size: 'normal',
+    });
+    recaptchaRef.current.render();
+  }, [showPhoneForm]);
 
   const validate = () => {
     if (!email.trim()) return 'Email requis';
@@ -49,10 +68,7 @@ export default function ConnexionPage() {
     setError('');
     signInWithPopup(auth, provider)
       .then((result) => {
-        const credential = GithubAuthProvider.credentialFromResult(result);
-        const token = credential?.accessToken;
         const user = result.user;
-        console.log('GitHub token:', token);
         Toast.show({
           type: 'success',
           text1: 'Connecté via GitHub',
@@ -72,10 +88,7 @@ export default function ConnexionPage() {
     setError('');
     signInWithPopup(auth, provider)
       .then((result) => {
-        const credential = FacebookAuthProvider.credentialFromResult(result);
-        const token = credential?.accessToken;
         const user = result.user;
-        console.log('Facebook token:', token);
         Toast.show({
           type: 'success',
           text1: 'Connecté via Facebook',
@@ -101,6 +114,54 @@ export default function ConnexionPage() {
         const msg = firebaseErrorMessage(error);
         setError(msg);
         Toast.show({ type: 'error', text1: 'Erreur connexion anonyme', text2: msg });
+      });
+  };
+
+  const handleSendCode = () => {
+    if (!phone.trim().startsWith('+')) {
+      const err = 'Numéro au format international requis (ex: +33612345678)';
+      setError(err);
+      Toast.show({ type: 'error', text1: 'Validation', text2: err });
+      return;
+    }
+    if (!recaptchaRef.current) {
+      Toast.show({ type: 'error', text1: 'reCAPTCHA non initialisé' });
+      return;
+    }
+    setError('');
+    signInWithPhoneNumber(auth, phone, recaptchaRef.current)
+      .then((result) => {
+        setConfirmation(result);
+        Toast.show({ type: 'success', text1: 'Code envoyé par SMS' });
+      })
+      .catch((error) => {
+        const msg = firebaseErrorMessage(error);
+        setError(msg);
+        Toast.show({ type: 'error', text1: 'Erreur envoi SMS', text2: msg });
+      });
+  };
+
+  const handleVerifyCode = () => {
+    if (!confirmation) return;
+    if (code.length < 6) {
+      setError('Code à 6 chiffres');
+      return;
+    }
+    setError('');
+    confirmation
+      .confirm(code)
+      .then((userCredential) => {
+        Toast.show({
+          type: 'success',
+          text1: 'Connecté',
+          text2: userCredential.user.phoneNumber ?? '',
+        });
+        router.replace('/profil');
+      })
+      .catch((error) => {
+        const msg = firebaseErrorMessage(error);
+        setError(msg);
+        Toast.show({ type: 'error', text1: 'Code invalide', text2: msg });
       });
   };
 
@@ -133,17 +194,69 @@ export default function ConnexionPage() {
         <View style={styles.line} />
       </View>
 
-      <Pressable style={styles.githubButton} onPress={handleGithubLogin}>
-        <Text style={styles.buttonText}>Se connecter avec GitHub</Text>
-      </Pressable>
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.gridButton, styles.githubButton]}
+          onPress={handleGithubLogin}
+        >
+          <Text style={styles.buttonText}>GitHub</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.gridButton, styles.facebookButton]}
+          onPress={handleFacebookLogin}
+        >
+          <Text style={styles.buttonText}>Facebook</Text>
+        </Pressable>
+      </View>
+      <View style={styles.row}>
+        <Pressable
+          style={[styles.gridButton, styles.phoneButton]}
+          onPress={() => setShowPhoneForm((v) => !v)}
+        >
+          <Text style={styles.buttonText}>Téléphone</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.gridButton, styles.anonymousButton]}
+          onPress={handleAnonymousLogin}
+        >
+          <Text style={styles.buttonText}>Anonyme</Text>
+        </Pressable>
+      </View>
 
-      <Pressable style={styles.facebookButton} onPress={handleFacebookLogin}>
-        <Text style={styles.buttonText}>Se connecter avec Facebook</Text>
-      </Pressable>
-
-      <Pressable style={styles.anonymousButton} onPress={handleAnonymousLogin}>
-        <Text style={styles.buttonText}>Connexion anonyme</Text>
-      </Pressable>
+      {showPhoneForm && (
+        <View style={styles.phoneSection}>
+          {!confirmation ? (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="+33612345678"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                autoCapitalize="none"
+              />
+              <View nativeID="recaptcha-container" />
+              <Pressable style={styles.button} onPress={handleSendCode}>
+                <Text style={styles.buttonText}>Envoyer le code</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Code reçu par SMS"
+                value={code}
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                maxLength={6}
+              />
+              <Pressable style={styles.button} onPress={handleVerifyCode}>
+                <Text style={styles.buttonText}>Valider le code</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -175,22 +288,22 @@ const styles = StyleSheet.create({
   },
   line: { flex: 1, height: 1, backgroundColor: '#e5e7eb' },
   separatorText: { color: '#6b7280', fontSize: 14 },
-  githubButton: {
-    backgroundColor: '#24292e',
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  gridButton: {
+    flex: 1,
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
   },
-  facebookButton: {
-    backgroundColor: '#1877f2',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  anonymousButton: {
-    backgroundColor: '#6b7280',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
+  githubButton: { backgroundColor: '#24292e' },
+  facebookButton: { backgroundColor: '#1877f2' },
+  phoneButton: { backgroundColor: '#16a34a' },
+  anonymousButton: { backgroundColor: '#6b7280' },
+  phoneSection: {
+    marginTop: 8,
+    gap: 12,
   },
 });

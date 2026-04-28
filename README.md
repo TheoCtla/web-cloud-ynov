@@ -1,50 +1,89 @@
-# Welcome to your Expo app 👋
+# web-cloud-ynov
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Projet individuel Ynov M2 — Développer Pour Le Cloud.
 
-## Get started
+Application React Native (Expo) avec authentification multi-providers Firebase, déployée automatiquement sur GitHub Pages via GitHub Actions, et buildée sur EAS pour Android.
 
-1. Install dependencies
+## 🌐 Application déployée
 
-   ```bash
-   npm install
-   ```
+**URL** : https://theoctla.github.io/web-cloud-ynov/
 
-2. Start the app
+## ✨ Fonctionnalités
 
-   ```bash
-   npx expo start
-   ```
+### Navigation (Expo Router)
 
-In the output, you'll find options to open the app in a
+- Page d'accueil
+- Page Connexion
+- Page Inscription
+- Page Connexion par téléphone
+- Page Profil
+- Navbar accessible sur toutes les pages
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Authentification (Firebase Auth)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- **Email / Mot de passe** (avec champ nom à l'inscription, validation des formulaires)
+- **Téléphone (OTP)** via SMS + reCAPTCHA
+- **GitHub OAuth**
+- **Facebook OAuth**
+- **Connexion anonyme**
 
-## Get a fresh project
+> ⚠️ **Note pour la connexion téléphone (OTP)** : le projet est sur le plan Firebase Spark (gratuit), qui n'autorise pas l'envoi de vrais SMS. Pour tester la connexion par téléphone, utilise le **numéro de test** déclaré dans la console Firebase :
+>
+> - **Numéro** : `+33612345678`
+> - **Code OTP** : `123456`
+>
+> Le flow d'authentification est complet (`signInWithPhoneNumber` + `RecaptchaVerifier` + `confirmation.confirm`), seul l'envoi du SMS est bypassé par Firebase pour les numéros de test.
 
-When you're ready, run:
+### UX
+
+- Toaster (`react-native-toast-message`) sur succès et erreurs
+- Messages d'erreur Firebase traduits en français (helper `utils/firebaseErrors.ts`)
+- Redirections automatiques :
+  - après connexion / inscription → `/profil`
+  - après déconnexion → `/connexion`
+
+## 🛠 Stack technique
+
+- Expo SDK 54 + Expo Router
+- React Native 0.81 + React 19
+- TypeScript
+- Firebase JS SDK 12 (Auth)
+- `react-native-toast-message`
+
+## 🚀 Lancer le projet en local
 
 ```bash
-npm run reset-project
+npm install
+npm run web
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+L'app web sera accessible sur `http://localhost:8081`.
 
-## Learn more
+## 🔁 CI/CD
 
-To learn more about developing your project with Expo, look at the following resources:
+Workflow GitHub Actions : `.github/workflows/build_deploy_web_android.yml`
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+À chaque push sur `main` :
 
-## Join the community
+1. **Build web** — `expo export -p web` → `dist/`
+2. **Deploy** — déploiement automatique sur GitHub Pages
+3. **Build Android** — déclenche un build EAS (`eas build --platform android`)
 
-Join our community of developers creating universal apps.
+Secrets requis dans le repo :
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `EXPO_TOKEN` — token EAS pour lancer les builds (https://expo.dev/accounts/[user]/settings/access-tokens)
+
+## 📁 Structure
+
+```
+app/
+  _layout.tsx          # navbar + Stack
+  index.tsx            # accueil
+  connexion.tsx        # email + GitHub + Facebook + anonyme
+  connexion-tel.tsx    # OTP téléphone
+  inscription.tsx      # email + nom + mdp
+  profil.tsx           # texte requis + déconnexion
+firebaseConfig.ts      # init Firebase + export auth
+metro.config.js        # +cjs pour Firebase
+utils/firebaseErrors.ts
+```

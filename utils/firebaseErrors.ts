@@ -20,6 +20,10 @@ const MESSAGES: Record<string, string> = {
   'auth/popup-closed-by-user': 'Fenêtre fermée avant la fin de la connexion',
   'auth/account-exists-with-different-credential':
     'Un compte existe déjà avec cet email via un autre fournisseur',
+  'auth/unauthorized-domain':
+    "Ce domaine n'est pas autorisé pour la connexion. Ajoute-le dans Firebase Auth → Settings → Authorized domains",
+  'auth/operation-not-allowed':
+    "Ce mode de connexion n'est pas activé dans la console Firebase",
 };
 
 export function firebaseErrorMessage(error: unknown): string {
