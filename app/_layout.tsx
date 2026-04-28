@@ -11,6 +11,7 @@ export default function RootLayout() {
         <Link href="/connexion" style={styles.link}>Connexion</Link>
         <Link href="/inscription" style={styles.link}>Inscription</Link>
         <Link href="/connexion-tel" style={styles.link}>Connexion tél.</Link>
+        <Link href="/profil" style={styles.link}>Profil</Link>
       </View>
       <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
