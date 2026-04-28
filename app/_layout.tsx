@@ -1,24 +1,35 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Link, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { StyleSheet, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
+    <View style={styles.container}>
+      <View style={styles.navbar}>
+        <Link href="/" style={styles.link}>Accueil</Link>
+        <Link href="/connexion" style={styles.link}>Connexion</Link>
+        <Link href="/inscription" style={styles.link}>Inscription</Link>
+        <Link href="/connexion-tel" style={styles.link}>Connexion tél.</Link>
+      </View>
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
-    </ThemeProvider>
+      <Toast />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  navbar: {
+    flexDirection: 'row',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    gap: 24,
+    backgroundColor: '#f3f4f6',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  link: { fontSize: 16, color: '#2563eb', fontWeight: '500' },
+});
