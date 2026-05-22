@@ -6,6 +6,8 @@ Projet Ynov M2 — Développer Pour Le Cloud — **Livrable 2 (projet de groupe)
 
 ## Application déployée
 
+Comme pour le premier projet, j'ai volontairement laissé la clé firebase en clair car ce n'est pas un secret. Elle ne donne aucun accès à mon projet
+
 **URL** : https://theoctla.github.io/web-cloud-ynov/
 
 ## Fonctionnalités
@@ -51,9 +53,7 @@ Projet Ynov M2 — Développer Pour Le Cloud — **Livrable 2 (projet de groupe)
 ## Déploiement des règles de sécurité
 
 Les règles sont versionnées dans `firestore.rules` et `storage.rules`
-(référencées par `firebase.json`). Pour les appliquer : dans la console Firebase,
-ouvrir l'onglet **Règles** de _Firestore Database_ puis de _Storage_, coller le
-contenu du fichier correspondant et cliquer sur **Publier**.
+(référencées par `firebase.json`).
 
 ## Stack technique
 
@@ -83,43 +83,4 @@ Workflow GitHub Actions : `.github/workflows/build_deploy_web_android.yml`.
 
 Secret requis dans le repo : `EXPO_TOKEN` (token EAS).
 
-> **Note connexion téléphone (OTP)** : le projet est sur le plan Firebase Spark
-> (gratuit), qui n'envoie pas de vrais SMS. Pour tester, utiliser le numéro de
-> test déclaré dans la console Firebase :
->
-> - Numéro : `+33612345678`
-> - Code OTP : `123456`
-
-## Structure
-
-```
-app/
-  _layout.tsx               # navbar + Stack + enregistrement push
-  index.tsx                 # accueil : liste des événements
-  connexion.tsx             # connexion (email, OTP, GitHub, Facebook, anonyme)
-  inscription.tsx           # inscription email + nom
-  profil.tsx                # profil + photo + déconnexion
-  newevent.tsx              # création d'un événement
-  event/[id]/index.tsx      # vue détaillée d'un événement
-  event/[id]/edit.tsx       # édition d'un événement (auteur)
-  event/[id]/newcomment.tsx # rédaction d'un commentaire
-components/
-  EventForm.tsx             # formulaire d'événement (création + édition)
-  Avatar.tsx                # photo de profil ronde réutilisable
-firebase/
-  events.ts                 # CRUD événements
-  comments.ts               # CRUD commentaires
-  participation.ts          # participation (transactions)
-  pushTokens.ts             # collection pushTokens
-utils/
-  storage.ts                # upload Firebase Storage
-  userPhoto.ts              # mise à jour photo de profil
-  notifications.ts          # permissions + Push Token + broadcast Expo
-  confirm.ts                # confirmation avant suppression
-  firebaseErrors.ts         # messages d'erreur Firebase en français
-functions/
-  index.js                  # Cloud Function broadcastNewEvent (envoi des notifs)
-firestore.rules             # règles de sécurité Firestore
-storage.rules               # règles de sécurité Storage
-firebase.json               # règles Firestore/Storage + Cloud Functions
-```
+> **Note connexion téléphone (OTP)** :
