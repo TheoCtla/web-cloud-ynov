@@ -4,9 +4,6 @@ Projet Ynov M2 — Développer Pour Le Cloud — **Livrable 2 (projet de groupe)
 
 **Sujet choisi : Sujet 6 — « Campus Events » (Agenda & Meetups).**
 
-Une application pour proposer, organiser et découvrir des événements étudiants
-(soirées, sessions révisions, tournois e-sport, covoiturage).
-
 ## Application déployée
 
 **URL** : https://theoctla.github.io/web-cloud-ynov/
@@ -14,6 +11,7 @@ Une application pour proposer, organiser et découvrir des événements étudian
 ## Fonctionnalités
 
 ### Événements (Cloud Firestore)
+
 - Page d'accueil listant les événements à venir, avec le nom et la photo de l'auteur.
 - Vue détaillée : titre, date & heure, lieu, description, photo d'illustration.
 - Création d'un événement avec photo d'illustration obligatoire (upload Storage).
@@ -21,26 +19,32 @@ Une application pour proposer, organiser et découvrir des événements étudian
   La suppression efface aussi, en cascade, ses commentaires et participations.
 
 ### Interaction
+
 - Bouton « Je participe » / annulation, avec compteur de participants.
 
 ### Commentaires
+
 - Questions logistiques sur la vue détaillée (point de RDV, covoiturage, matériel…).
 - Rédaction réservée aux utilisateurs connectés.
 - Édition / suppression d'un commentaire réservées à son auteur.
 
 ### Profil & Cloud Storage
+
 - Page de profil détaillée de l'utilisateur connecté.
 - Modification du `displayName`, upload et affichage de la photo de profil.
 
 ### Authentification (Firebase Auth)
+
 - Email / mot de passe, téléphone (OTP), GitHub, Facebook, connexion anonyme.
 
 ### Notifications push (Expo)
+
 - Génération du Push Token Expo à la connexion, stocké dans Firestore (`pushTokens`).
 - Broadcast à tous les utilisateurs via une Cloud Function déclenchée à la
   création d'un événement (`functions/broadcastNewEvent`).
 
 ### Sécurité
+
 - `firestore.rules` / `storage.rules` stricts : lecture réservée aux utilisateurs
   connectés, modification / suppression réservées au créateur légitime de la donnée.
 
@@ -48,7 +52,7 @@ Une application pour proposer, organiser et découvrir des événements étudian
 
 Les règles sont versionnées dans `firestore.rules` et `storage.rules`
 (référencées par `firebase.json`). Pour les appliquer : dans la console Firebase,
-ouvrir l'onglet **Règles** de *Firestore Database* puis de *Storage*, coller le
+ouvrir l'onglet **Règles** de _Firestore Database_ puis de _Storage_, coller le
 contenu du fichier correspondant et cliquer sur **Publier**.
 
 ## Stack technique

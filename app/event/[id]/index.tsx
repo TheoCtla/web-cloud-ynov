@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -58,6 +59,10 @@ export default function EventDetailPage() {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [savingComment, setSavingComment] = useState(false);
+
+  // Sur large écran : image fixe à gauche, infos scrollables à droite.
+  const { width } = useWindowDimensions();
+  const isWide = width >= 768;
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -198,169 +203,190 @@ export default function EventDetailPage() {
     );
   }
 
+  // Contenu informatif, partagé par les deux mises en page (large / mobile).
+  const info = (
+    <>
+      <Text style={styles.title}>{event.title}</Text>
+
+      {/* Actions réservées à l'auteur de l'événement */}
+      {isOwner && (
+        <View style={styles.ownerActions}>
+          <Pressable
+            style={[styles.ownerButton, styles.editButton]}
+            onPress={() => router.push(`/event/${id}/edit`)}
+          >
+            <FontAwesome name="pencil" size={13} color="#fff" />
+            <Text style={styles.ownerButtonText}>Éditer</Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.ownerButton,
+              styles.deleteButton,
+              deleting && styles.buttonDisabled,
+            ]}
+            onPress={handleDeleteEvent}
+            disabled={deleting}
+          >
+            <FontAwesome name="trash" size={13} color="#fff" />
+            <Text style={styles.ownerButtonText}>
+              {deleting ? 'Suppression...' : 'Supprimer'}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      <View style={styles.metaCard}>
+        <View style={styles.metaRow}>
+          <FontAwesome name="calendar" size={14} color="#2563eb" />
+          <Text style={styles.metaText}>{formatEventDate(event.date)}</Text>
+        </View>
+        <View style={styles.metaRow}>
+          <FontAwesome name="map-marker" size={14} color="#2563eb" />
+          <Text style={styles.metaText}>{event.location}</Text>
+        </View>
+        <View style={styles.metaRow}>
+          <Avatar uri={event.createdByPhotoURL} size={24} />
+          <Text style={styles.metaText}>
+            Organisé par {event.createdByName ?? 'Anonyme'}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.description}>{event.description}</Text>
+
+      <View style={styles.participationBlock}>
+        <View style={styles.countBlock}>
+          <FontAwesome name="users" size={20} color="#2563eb" />
+          <Text style={styles.countNumber}>{event.participantsCount}</Text>
+          <Text style={styles.countLabel}>
+            participant{event.participantsCount > 1 ? 's' : ''}
+          </Text>
+        </View>
+
+        {user ? (
+          <Pressable
+            style={[
+              styles.joinButton,
+              participating && styles.joinButtonActive,
+              toggling && styles.buttonDisabled,
+            ]}
+            onPress={toggleParticipation}
+            disabled={toggling}
+          >
+            <FontAwesome
+              name={participating ? 'check' : 'plus'}
+              size={14}
+              color="#fff"
+            />
+            <Text style={styles.joinButtonText}>
+              {participating ? 'Inscrit' : 'Je participe'}
+            </Text>
+          </Pressable>
+        ) : (
+          <Link href="/connexion" style={styles.loginLink}>
+            Se connecter pour participer
+          </Link>
+        )}
+      </View>
+
+      <View style={styles.separator} />
+
+      <View style={styles.commentsHeader}>
+        <Text style={styles.sectionTitle}>
+          Questions & commentaires ({comments.length})
+        </Text>
+        {user ? (
+          <Link href={`/event/${id}/newcomment`} asChild>
+            <Pressable style={styles.commentButton}>
+              <Text style={styles.commentButtonText}>+ Commenter</Text>
+            </Pressable>
+          </Link>
+        ) : null}
+      </View>
+
+      {comments.length === 0 ? (
+        <Text style={styles.empty}>Aucune question pour le moment</Text>
+      ) : (
+        comments.map((c) => {
+          const canManage = !!user && user.uid === c.createdBy;
+          const isEditing = editingCommentId === c.id;
+          return (
+            <View key={c.id} style={styles.commentCard}>
+              <View style={styles.commentHeader}>
+                <Avatar uri={c.createdByPhotoURL} size={32} />
+                <View style={styles.commentHeaderText}>
+                  <Text style={styles.commentAuthor}>
+                    {c.createdByName ?? 'Anonyme'}
+                  </Text>
+                  <Text style={styles.commentDate}>
+                    {formatCommentDate(c.date)}
+                  </Text>
+                </View>
+              </View>
+
+              {isEditing ? (
+                <>
+                  <TextInput
+                    style={styles.commentEditInput}
+                    value={editingText}
+                    onChangeText={setEditingText}
+                    multiline
+                    textAlignVertical="top"
+                  />
+                  <View style={styles.commentActions}>
+                    <Pressable onPress={cancelEditComment} disabled={savingComment}>
+                      <Text style={styles.actionMuted}>Annuler</Text>
+                    </Pressable>
+                    <Pressable onPress={saveEditComment} disabled={savingComment}>
+                      <Text style={styles.actionPrimary}>
+                        {savingComment ? 'Enregistrement...' : 'Enregistrer'}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.commentText}>{c.text}</Text>
+                  {canManage && (
+                    <View style={styles.commentActions}>
+                      <Pressable onPress={() => startEditComment(c)}>
+                        <Text style={styles.actionPrimary}>Éditer</Text>
+                      </Pressable>
+                      <Pressable onPress={() => handleDeleteComment(c)}>
+                        <Text style={styles.actionDanger}>Supprimer</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+          );
+        })
+      )}
+    </>
+  );
+
+  // Large écran : image fixe à gauche, seules les infos scrollent à droite.
+  if (isWide) {
+    return (
+      <View style={styles.splitRow}>
+        <Image
+          source={{ uri: event.photoURL }}
+          style={styles.splitImage}
+          resizeMode="cover"
+        />
+        <ScrollView style={styles.splitScroll} contentContainerStyle={styles.content}>
+          {info}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Mobile : image en bannière puis contenu, le tout scrolle.
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Image source={{ uri: event.photoURL }} style={styles.banner} />
-
-      <View style={styles.content}>
-        <Text style={styles.title}>{event.title}</Text>
-
-        {/* Actions réservées à l'auteur de l'événement */}
-        {isOwner && (
-          <View style={styles.ownerActions}>
-            <Pressable
-              style={[styles.ownerButton, styles.editButton]}
-              onPress={() => router.push(`/event/${id}/edit`)}
-            >
-              <FontAwesome name="pencil" size={13} color="#fff" />
-              <Text style={styles.ownerButtonText}>Éditer</Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.ownerButton,
-                styles.deleteButton,
-                deleting && styles.buttonDisabled,
-              ]}
-              onPress={handleDeleteEvent}
-              disabled={deleting}
-            >
-              <FontAwesome name="trash" size={13} color="#fff" />
-              <Text style={styles.ownerButtonText}>
-                {deleting ? 'Suppression...' : 'Supprimer'}
-              </Text>
-            </Pressable>
-          </View>
-        )}
-
-        <View style={styles.metaCard}>
-          <View style={styles.metaRow}>
-            <FontAwesome name="calendar" size={14} color="#2563eb" />
-            <Text style={styles.metaText}>{formatEventDate(event.date)}</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <FontAwesome name="map-marker" size={14} color="#2563eb" />
-            <Text style={styles.metaText}>{event.location}</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <Avatar uri={event.createdByPhotoURL} size={24} />
-            <Text style={styles.metaText}>
-              Organisé par {event.createdByName ?? 'Anonyme'}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.description}>{event.description}</Text>
-
-        <View style={styles.participationBlock}>
-          <View style={styles.countBlock}>
-            <FontAwesome name="users" size={20} color="#2563eb" />
-            <Text style={styles.countNumber}>{event.participantsCount}</Text>
-            <Text style={styles.countLabel}>
-              participant{event.participantsCount > 1 ? 's' : ''}
-            </Text>
-          </View>
-
-          {user ? (
-            <Pressable
-              style={[
-                styles.joinButton,
-                participating && styles.joinButtonActive,
-                toggling && styles.buttonDisabled,
-              ]}
-              onPress={toggleParticipation}
-              disabled={toggling}
-            >
-              <FontAwesome
-                name={participating ? 'check' : 'plus'}
-                size={14}
-                color="#fff"
-              />
-              <Text style={styles.joinButtonText}>
-                {participating ? 'Inscrit' : 'Je participe'}
-              </Text>
-            </Pressable>
-          ) : (
-            <Link href="/connexion" style={styles.loginLink}>
-              Se connecter pour participer
-            </Link>
-          )}
-        </View>
-
-        <View style={styles.separator} />
-
-        <View style={styles.commentsHeader}>
-          <Text style={styles.sectionTitle}>
-            Questions & commentaires ({comments.length})
-          </Text>
-          {user ? (
-            <Link href={`/event/${id}/newcomment`} asChild>
-              <Pressable style={styles.commentButton}>
-                <Text style={styles.commentButtonText}>+ Commenter</Text>
-              </Pressable>
-            </Link>
-          ) : null}
-        </View>
-
-        {comments.length === 0 ? (
-          <Text style={styles.empty}>Aucune question pour le moment</Text>
-        ) : (
-          comments.map((c) => {
-            const canManage = !!user && user.uid === c.createdBy;
-            const isEditing = editingCommentId === c.id;
-            return (
-              <View key={c.id} style={styles.commentCard}>
-                <View style={styles.commentHeader}>
-                  <Avatar uri={c.createdByPhotoURL} size={32} />
-                  <View style={styles.commentHeaderText}>
-                    <Text style={styles.commentAuthor}>
-                      {c.createdByName ?? 'Anonyme'}
-                    </Text>
-                    <Text style={styles.commentDate}>
-                      {formatCommentDate(c.date)}
-                    </Text>
-                  </View>
-                </View>
-
-                {isEditing ? (
-                  <>
-                    <TextInput
-                      style={styles.commentEditInput}
-                      value={editingText}
-                      onChangeText={setEditingText}
-                      multiline
-                      textAlignVertical="top"
-                    />
-                    <View style={styles.commentActions}>
-                      <Pressable onPress={cancelEditComment} disabled={savingComment}>
-                        <Text style={styles.actionMuted}>Annuler</Text>
-                      </Pressable>
-                      <Pressable onPress={saveEditComment} disabled={savingComment}>
-                        <Text style={styles.actionPrimary}>
-                          {savingComment ? 'Enregistrement...' : 'Enregistrer'}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.commentText}>{c.text}</Text>
-                    {canManage && (
-                      <View style={styles.commentActions}>
-                        <Pressable onPress={() => startEditComment(c)}>
-                          <Text style={styles.actionPrimary}>Éditer</Text>
-                        </Pressable>
-                        <Pressable onPress={() => handleDeleteComment(c)}>
-                          <Text style={styles.actionDanger}>Supprimer</Text>
-                        </Pressable>
-                      </View>
-                    )}
-                  </>
-                )}
-              </View>
-            );
-          })
-        )}
-      </View>
+      <View style={styles.content}>{info}</View>
     </ScrollView>
   );
 }
@@ -369,6 +395,11 @@ const styles = StyleSheet.create({
   container: { paddingBottom: 32 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   banner: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#f3f4f6' },
+  // --- Mise en page large écran (image fixe + infos scrollables) ---
+  splitRow: { flex: 1, flexDirection: 'row' },
+  splitImage: { width: '40%', height: '100%', backgroundColor: '#f3f4f6' },
+  splitScroll: { flex: 1 },
+  // --- Contenu ---
   content: { padding: 24, gap: 12 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#111827' },
   ownerActions: { flexDirection: 'row', gap: 10 },

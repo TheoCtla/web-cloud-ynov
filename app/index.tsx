@@ -3,10 +3,22 @@ import { Link, useFocusEffect } from 'expo-router';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Timestamp } from 'firebase/firestore';
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import Avatar from '../components/Avatar';
 import { Event, getUpcomingEvents } from '../firebase/events';
 import { auth } from '../firebaseConfig';
+
+// Marges et espacement utilisés pour calculer la largeur des cartes.
+const CONTAINER_PADDING = 24;
+const GRID_GAP = 12;
 
 function formatEventDate(timestamp: Timestamp) {
   return timestamp.toDate().toLocaleString('fr-FR', {
@@ -23,6 +35,13 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+
+  // Grille responsive : 4 cartes/ligne sur desktop, 2 sur tablette, 1 sur mobile.
+  const { width } = useWindowDimensions();
+  const numColumns = width >= 1024 ? 4 : width >= 700 ? 2 : 1;
+  const cardWidth = Math.floor(
+    (width - CONTAINER_PADDING * 2 - GRID_GAP * (numColumns - 1)) / numColumns,
+  );
 
   const loadEvents = useCallback(async () => {
     setLoading(true);
@@ -94,46 +113,55 @@ export default function HomePage() {
       ) : events.length === 0 ? (
         <Text style={styles.empty}>Aucun événement à venir</Text>
       ) : (
-        events.map((e) => (
-          <Link key={e.id} href={`/event/${e.id}`} asChild>
-            <Pressable style={styles.card}>
-              <Image source={{ uri: e.photoURL }} style={styles.cardImage} />
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{e.title}</Text>
-                <View style={styles.cardMetaRow}>
-                  <FontAwesome name="calendar" size={12} color="#6b7280" />
-                  <Text style={styles.cardMeta}>{formatEventDate(e.date)}</Text>
-                </View>
-                <View style={styles.cardMetaRow}>
-                  <FontAwesome name="map-marker" size={12} color="#6b7280" />
-                  <Text style={styles.cardMeta} numberOfLines={1}>{e.location}</Text>
-                </View>
-                <View style={styles.cardFooter}>
-                  {/* Nom + photo de l'auteur, affichés systématiquement */}
-                  <View style={styles.cardAuthor}>
-                    <Avatar uri={e.createdByPhotoURL} size={22} />
-                    <Text style={styles.cardAuthorName} numberOfLines={1}>
-                      {e.createdByName ?? 'Anonyme'}
+        <View style={styles.grid}>
+          {events.map((e) => (
+            <View key={e.id} style={{ width: cardWidth }}>
+              <Link href={`/event/${e.id}`} asChild>
+                <Pressable style={styles.card}>
+                  <Image source={{ uri: e.photoURL }} style={styles.cardImage} />
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardTitle} numberOfLines={1}>
+                      {e.title}
                     </Text>
+                    <View style={styles.cardMetaRow}>
+                      <FontAwesome name="calendar" size={12} color="#6b7280" />
+                      <Text style={styles.cardMeta}>{formatEventDate(e.date)}</Text>
+                    </View>
+                    <View style={styles.cardMetaRow}>
+                      <FontAwesome name="map-marker" size={12} color="#6b7280" />
+                      <Text style={styles.cardMeta} numberOfLines={1}>
+                        {e.location}
+                      </Text>
+                    </View>
+                    <View style={styles.cardFooter}>
+                      {/* Nom + photo de l'auteur, affichés systématiquement */}
+                      <View style={styles.cardAuthor}>
+                        <Avatar uri={e.createdByPhotoURL} size={22} />
+                        <Text style={styles.cardAuthorName} numberOfLines={1}>
+                          {e.createdByName ?? 'Anonyme'}
+                        </Text>
+                      </View>
+                      <View style={styles.cardCount}>
+                        <FontAwesome name="users" size={12} color="#2563eb" />
+                        <Text style={styles.cardCountText}>
+                          {e.participantsCount} participant
+                          {e.participantsCount > 1 ? 's' : ''}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                  <View style={styles.cardCount}>
-                    <FontAwesome name="users" size={12} color="#2563eb" />
-                    <Text style={styles.cardCountText}>
-                      {e.participantsCount} participant{e.participantsCount > 1 ? 's' : ''}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </Pressable>
-          </Link>
-        ))
+                </Pressable>
+              </Link>
+            </View>
+          ))}
+        </View>
       )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 24, gap: 12 },
+  container: { padding: CONTAINER_PADDING, gap: 12 },
   gate: {
     flex: 1,
     alignItems: 'center',
@@ -163,6 +191,11 @@ const styles = StyleSheet.create({
   },
   newButtonText: { color: '#fff', fontWeight: '600', fontSize: 14 },
   empty: { fontSize: 14, color: '#6b7280', textAlign: 'center', marginTop: 40 },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GRID_GAP,
+  },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
