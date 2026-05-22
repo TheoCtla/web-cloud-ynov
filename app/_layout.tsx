@@ -1,9 +1,24 @@
 import { Link, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { auth } from '../firebaseConfig';
+import { registerForPushNotifications } from '../utils/notifications';
 
 export default function RootLayout() {
+  // À la connexion d'un utilisateur, on enregistre le token de
+  // notification push de son appareil dans Firestore.
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        registerForPushNotifications(user.uid);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.navbar}>

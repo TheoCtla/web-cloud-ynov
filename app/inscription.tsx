@@ -11,7 +11,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { auth } from '../firebaseConfig';
 import { firebaseErrorMessage } from '../utils/firebaseErrors';
@@ -218,20 +218,23 @@ export default function InscriptionPage() {
         <View style={styles.line} />
       </View>
 
-      <View style={styles.row}>
-        <Pressable
-          style={[styles.gridButton, styles.githubButton]}
-          onPress={handleGithubLogin}
-        >
-          <Text style={styles.buttonText}>GitHub</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.gridButton, styles.facebookButton]}
-          onPress={handleFacebookLogin}
-        >
-          <Text style={styles.buttonText}>Facebook</Text>
-        </Pressable>
-      </View>
+      {/* GitHub & Facebook : signInWithPopup n'existe que sur le web */}
+      {Platform.OS === 'web' && (
+        <View style={styles.row}>
+          <Pressable
+            style={[styles.gridButton, styles.githubButton]}
+            onPress={handleGithubLogin}
+          >
+            <Text style={styles.buttonText}>GitHub</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.gridButton, styles.facebookButton]}
+            onPress={handleFacebookLogin}
+          >
+            <Text style={styles.buttonText}>Facebook</Text>
+          </Pressable>
+        </View>
+      )}
       <View style={styles.row}>
         <Pressable
           style={[styles.gridButton, styles.phoneButton]}
