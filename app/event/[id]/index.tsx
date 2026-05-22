@@ -276,7 +276,7 @@ export default function EventDetailPage() {
                 color="#fff"
               />
               <Text style={styles.joinButtonText}>
-                {participating ? 'Je participe ✓' : 'Je participe'}
+                {participating ? 'Inscrit' : 'Je participe'}
               </Text>
             </Pressable>
           ) : (

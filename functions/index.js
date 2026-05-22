@@ -10,7 +10,7 @@ const EXPO_PUSH_API = 'https://exp.host/--/api/v2/push/send';
 
 // Déclenchée à chaque création d'un événement : envoie une notification push
 // à tous les utilisateurs dont le token est enregistré dans `pushTokens`.
-// L'envoi est fait côté serveur → pas de blocage CORS (contrairement au web).
+// L'envoi est fait côté serveur -> pas de blocage CORS (contrairement au web).
 exports.broadcastNewEvent = onDocumentCreated('events/{eventId}', async (event) => {
   const data = event.data?.data();
   if (!data) return;

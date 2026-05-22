@@ -1,73 +1,49 @@
 rules_version = '2';
 
-// Règles de sécurité Cloud Firestore — Campus Events
-// Principe : lecture réservée aux utilisateurs connectés ;
-// seul le créateur légitime d'une donnée peut la modifier ou la supprimer.
-// Tout ce qui n'est pas explicitement autorisé ci-dessous est refusé par défaut.
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // L'utilisateur connecté est-il l'auteur de cet événement ?
-    // Utilisé pour autoriser la suppression en cascade des sous-collections.
     function isEventOwner(eventId) {
       return request.auth != null
         && get(/databases/$(database)/documents/events/$(eventId)).data.createdBy
              == request.auth.uid;
     }
 
-    // ===== Événements =====
     match /events/{eventId} {
-      // Lecture : tout utilisateur connecté
       allow read: if request.auth != null;
-
-      // Création : être connecté et se déclarer soi-même comme auteur
       allow create: if request.auth != null
                     && request.resource.data.createdBy == request.auth.uid;
 
-      // Mise à jour : l'auteur peut tout éditer ; n'importe quel utilisateur
-      // connecté peut modifier UNIQUEMENT le compteur de participants
-      // (nécessaire pour le bouton « Je participe »).
       allow update: if request.auth != null && (
                       resource.data.createdBy == request.auth.uid
                       || request.resource.data.diff(resource.data)
                            .affectedKeys().hasOnly(['participantsCount'])
                     );
 
-      // Suppression : auteur uniquement
       allow delete: if request.auth != null
                     && resource.data.createdBy == request.auth.uid;
 
-      // --- Participants (sous-collection, 1 document par utilisateur) ---
       match /participants/{userId} {
         allow read: if request.auth != null;
-        // Chaque utilisateur ne crée que sa propre participation
         allow create: if request.auth != null && request.auth.uid == userId;
-        // Suppression : soi-même, ou l'auteur de l'événement (cascade)
         allow delete: if request.auth != null
                       && (request.auth.uid == userId || isEventOwner(eventId));
       }
 
-      // --- Commentaires (sous-collection) ---
       match /comments/{commentId} {
         allow read: if request.auth != null;
         allow create: if request.auth != null
                       && request.resource.data.createdBy == request.auth.uid;
-        // Modification : auteur du commentaire uniquement
         allow update: if request.auth != null
                       && resource.data.createdBy == request.auth.uid;
-        // Suppression : auteur du commentaire, ou auteur de l'événement (cascade)
         allow delete: if request.auth != null
                       && (resource.data.createdBy == request.auth.uid
                           || isEventOwner(eventId));
       }
     }
 
-    // ===== Tokens de notification push (1 document par utilisateur) =====
     match /pushTokens/{userId} {
-      // Lecture autorisée aux connectés (nécessaire pour le broadcast)
       allow read: if request.auth != null;
-      // Chaque utilisateur n'écrit que son propre token
       allow write: if request.auth != null && request.auth.uid == userId;
     }
   }

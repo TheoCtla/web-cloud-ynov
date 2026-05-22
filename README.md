@@ -7,11 +7,11 @@ Projet Ynov M2 — Développer Pour Le Cloud — **Livrable 2 (projet de groupe)
 Une application pour proposer, organiser et découvrir des événements étudiants
 (soirées, sessions révisions, tournois e-sport, covoiturage).
 
-## 🌐 Application déployée
+## Application déployée
 
 **URL** : https://theoctla.github.io/web-cloud-ynov/
 
-## ✨ Fonctionnalités
+## Fonctionnalités
 
 ### Événements (Cloud Firestore)
 - Page d'accueil listant les événements à venir, avec le nom et la photo de l'auteur.
@@ -44,14 +44,14 @@ Une application pour proposer, organiser et découvrir des événements étudian
 - `firestore.rules` / `storage.rules` stricts : lecture réservée aux utilisateurs
   connectés, modification / suppression réservées au créateur légitime de la donnée.
 
-## 🔒 Déploiement des règles de sécurité
+## Déploiement des règles de sécurité
 
 Les règles sont versionnées dans `firestore.rules` et `storage.rules`
-(référencées par `firebase.json`). Pour les appliquer : console Firebase →
-*Firestore Database* / *Storage* → onglet **Règles** → coller le contenu du
-fichier → **Publier**.
+(référencées par `firebase.json`). Pour les appliquer : dans la console Firebase,
+ouvrir l'onglet **Règles** de *Firestore Database* puis de *Storage*, coller le
+contenu du fichier correspondant et cliquer sur **Publier**.
 
-## 🛠 Stack technique
+## Stack technique
 
 - Expo SDK 54 + Expo Router
 - React Native 0.81 + React 19 + TypeScript
@@ -59,7 +59,7 @@ fichier → **Publier**.
 - `expo-notifications`, `expo-image-picker`
 - `react-native-toast-message`
 
-## 🚀 Lancer le projet en local
+## Lancer le projet en local
 
 ```bash
 npm install
@@ -68,7 +68,7 @@ npm run web
 
 L'app web sera accessible sur `http://localhost:8081`.
 
-## 🔁 CI/CD
+## CI/CD
 
 Workflow GitHub Actions : `.github/workflows/build_deploy_web_android.yml`.
 
@@ -86,7 +86,7 @@ Secret requis dans le repo : `EXPO_TOKEN` (token EAS).
 > - Numéro : `+33612345678`
 > - Code OTP : `123456`
 
-## 📁 Structure
+## Structure
 
 ```
 app/
